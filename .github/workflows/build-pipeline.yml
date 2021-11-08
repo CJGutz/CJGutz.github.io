@@ -18,13 +18,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Print Variable
-        run: echo "Variablen har verdien $variable"
+        run: echo "Variable is $variable"
         env:
           variable: Variable
+  
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to Docker
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Make image
+      - uses: docker/metadata-action@v3
+        with: 
+          images: docker-image/docker-image
+      - name: Push Docker to Hub
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
 
   # Step 3 - Add tests and linting here
   test:
-    needs: build
+    needs: docker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
